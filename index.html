@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Workout Timer – A / B / C</title>
+  <title>Workout Timer – A / B / C / Mobility</title>
   <style>
     :root {
       --bg: #0f1419;
@@ -87,6 +87,7 @@
         <button class="workout-btn" data-workout="A">Workout A<span>Goblet Squat • Push-Ups • Pull-Ups • RDL • Face Pull • Ab Wheel</span></button>
         <button class="workout-btn" data-workout="B">Workout B<span>Bulgarian SS • OHP • 1-Arm Row • Lat PD • Curl • Pushdown • Knee Raise</span></button>
         <button class="workout-btn" data-workout="C">Workout C<span>Band Front Squat • Push-Ups • Bent Row • SL RDL • Lateral Raise • Farmer • Leg Raise</span></button>
+        <button class="workout-btn" data-workout="M">Mobility Routine<span>Bike • Wall Slides • Pull-Aparts • Face Pulls • Ext Rot • Stretches • Dead Hang</span></button>
       </div>
     </div>
   </div>
@@ -179,6 +180,21 @@
           { name: "Farmer Carry", sets: 3, reps: "45s", video: "https://www.youtube.com/watch?v=lLAw6fUccKA" },
           { name: "Hanging Leg Raise", sets: 3, reps: "10", video: "https://www.youtube.com/watch?v=Pr1ieGZ5atk" }
         ]
+      },
+      M: {
+        name: "Mobility Routine",
+        exercises: [
+          { name: "Bike (warm-up)", sets: 1, reps: "5 min", video: "https://www.youtube.com/watch?v=dOCQjaasbGs" },
+          { name: "Wall Slides", sets: 2, reps: "10", video: "https://www.youtube.com/watch?v=i_0zLUcE-zk" },
+          { name: "Band Pull-Aparts", sets: 2, reps: "15", video: "https://www.youtube.com/watch?v=bYsgk9SrJ48" },
+          { name: "Face Pulls", sets: 2, reps: "15", video: "https://www.youtube.com/watch?v=ljgqer1ZpXg" },
+          { name: "External Rotations", sets: 2, reps: "12", video: "https://www.youtube.com/watch?v=3VcKaXpzqRo" },
+          { name: "Doorway Stretch", sets: 2, reps: "30s", video: "https://www.youtube.com/watch?v=B9uY01NoqBg" },
+          { name: "Thoracic Extensions", sets: 2, reps: "10", video: "https://www.youtube.com/watch?v=VpJHMTI_AHY" },
+          { name: "Worlds Greatest Stretch", sets: 2, reps: "5/side", video: "https://www.youtube.com/watch?v=nnbYao-5bSI" },
+          { name: "Deep Squat Hold", sets: 2, reps: "30s", video: "https://www.youtube.com/watch?v=iUnwcn6f_7Y" },
+          { name: "Dead Hang", sets: 1, reps: "30-60s", video: "https://www.youtube.com/watch?v=dOCQjaasbGs" }
+        ]
       }
     };
 
@@ -211,7 +227,7 @@
       videoLink.style.display = ex.video ? "inline-block" : "none";
       currentSetEl.textContent = state.setIndex + 1;
       totalSetsEl.textContent = ex.sets;
-      repTarget.textContent = (ex.reps.includes("s") || ex.reps === "AMRAP") ? ex.reps : ex.reps + " reps";
+      repTarget.textContent = (ex.reps.includes("s") || ex.reps === "AMRAP" || ex.reps.includes("min")) ? ex.reps : ex.reps + " reps";
       statusBadge.className = "status-badge";
       if (state.mode === "idle") { statusBadge.classList.add("status-idle"); statusBadge.textContent = "Ready"; timerLabel.textContent = "Set Timer"; timerValue.className = "timer-value idle"; }
       else if (state.mode === "working") { statusBadge.classList.add("status-working"); statusBadge.textContent = "Working"; timerLabel.textContent = "Set Time"; timerValue.className = "timer-value working"; }
