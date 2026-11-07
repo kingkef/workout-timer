@@ -55,7 +55,6 @@
 
     .hidden { display: none !important; }
 
-    /* ===== SELECT SCREEN ===== */
     .workout-grid {
       display: grid;
       gap: 10px;
@@ -88,7 +87,6 @@
       margin-top: 4px;
     }
 
-    /* ===== ACTIVE WORKOUT ===== */
     .header-row {
       display: flex;
       justify-content: space-between;
@@ -138,7 +136,6 @@
       font-weight: 600;
     }
 
-    /* Timer Display */
     .timer-display {
       text-align: center;
       padding: 20px 0 12px;
@@ -164,7 +161,6 @@
     .timer-value.working { color: var(--success); }
     .timer-value.idle { color: var(--text); }
 
-    /* Controls */
     .controls {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -220,7 +216,6 @@
       grid-column: 1 / -1;
     }
 
-    /* Rest time selector */
     .rest-row {
       display: flex;
       align-items: center;
@@ -259,7 +254,6 @@
       color: white;
     }
 
-    /* Exercise list */
     .exercise-list {
       margin-top: 8px;
     }
@@ -295,7 +289,6 @@
 
     .exercise-item.current .sets { color: var(--accent); }
 
-    /* Status badge */
     .status-badge {
       display: inline-block;
       font-size: 0.7rem;
@@ -311,7 +304,6 @@
     .status-working { background: #14532d; color: var(--success); }
     .status-resting { background: #2e1065; color: #c4b5fd; }
 
-    /* Finish screen */
     .finish-screen {
       text-align: center;
       padding: 32px 16px;
@@ -327,7 +319,6 @@
       margin-bottom: 24px;
     }
 
-    /* Sound toggle */
     .sound-toggle {
       display: flex;
       align-items: center;
@@ -343,20 +334,11 @@
       height: 18px;
       accent-color: var(--accent);
     }
-
-    /* Small helper text */
-    .helper {
-      font-size: 0.75rem;
-      color: var(--muted);
-      text-align: center;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
   <h1>Workout Timer</h1>
 
-  <!-- SELECT SCREEN -->
   <div id="select-screen">
     <div class="card">
       <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 14px; text-align: center;">
@@ -379,7 +361,6 @@
     </div>
   </div>
 
-  <!-- ACTIVE WORKOUT SCREEN -->
   <div id="active-screen" class="hidden">
     <div class="card">
       <div class="header-row">
@@ -431,7 +412,6 @@
     </div>
   </div>
 
-  <!-- FINISH SCREEN -->
   <div id="finish-screen" class="hidden">
     <div class="card finish-screen">
       <h2>Workout Complete 💪</h2>
@@ -443,7 +423,6 @@
   </div>
 
   <script>
-    // ========== DATA ==========
     const WORKOUTS = {
       A: {
         name: "Workout A",
@@ -482,19 +461,17 @@
       }
     };
 
-    // ========== STATE ==========
     let state = {
       workoutKey: null,
       exerciseIndex: 0,
-      setIndex: 0,          // 0-based
-      mode: "idle",        // idle | working | resting
+      setIndex: 0,
+      mode: "idle",
       seconds: 0,
       restSeconds: 90,
       timerId: null,
       soundOn: true
     };
 
-    // ========== DOM ==========
     const $ = (id) => document.getElementById(id);
 
     const selectScreen = $("select-screen");
@@ -522,7 +499,6 @@
     const finishMessage = $("finish-message");
     const soundToggle = $("sound-toggle");
 
-    // ========== AUDIO ==========
     let audioCtx = null;
 
     function ensureAudio() {
@@ -555,11 +531,10 @@
       setTimeout(() => beep(1100, 0.2), 300);
     }
 
-    // ========== HELPERS ==========
     function formatTime(sec) {
       const m = Math.floor(sec / 60);
       const s = sec % 60;
-      return `${m}:${s.toString().padStart(2, "0")}`;
+      return m + ":" + s.toString().padStart(2, "0");
     }
 
     function currentExercise() {
@@ -577,21 +552,17 @@
       }
     }
 
-    // ========== RENDER ==========
     function render() {
       const w = WORKOUTS[state.workoutKey];
       const ex = currentExercise();
 
       workoutLabel.textContent = w.name;
-      progressText.textContent = `${state.exerciseIndex + 1} / ${totalExercises()}`;
+      progressText.textContent = (state.exerciseIndex + 1) + " / " + totalExercises();
       exerciseName.textContent = ex.name;
       currentSetEl.textContent = state.setIndex + 1;
       totalSetsEl.textContent = ex.sets;
-      repTarget.textContent = ex.reps.includes("s") || ex.reps === "AMRAP"
-        ? ex.reps
-        : `${ex.reps} reps`;
+      repTarget.textContent = (ex.reps.includes("s") || ex.reps === "AMRAP") ? ex.reps : ex.reps + " reps";
 
-      // Status
       statusBadge.className = "status-badge";
       if (state.mode === "idle") {
         statusBadge.classList.add("status-idle");
@@ -612,29 +583,22 @@
 
       timerValue.textContent = formatTime(state.seconds);
 
-      // Buttons
       startSetBtn.disabled = state.mode !== "idle";
-      stopSetBtn.disabled = state.mode !== "working";
-      startRestBtn.disabled = state.mode !== "idle" || state.setIndex >= ex.sets - 1 && state.exerciseIndex >= totalExercises() - 1;
-      // Actually allow rest after any completed set except we handle next differently
+      stopSetBtn.disabled = state.mode !== "working" && state.mode !== "resting";
       startRestBtn.disabled = state.mode !== "idle";
 
-      // Show Next Set when idle and there are more sets or exercises
       const isLastSet = state.setIndex >= ex.sets - 1;
       const isLastExercise = state.exerciseIndex >= totalExercises() - 1;
 
       if (state.mode === "idle") {
         nextSetBtn.classList.remove("hidden");
-        nextSetBtn.textContent = isLastSet
-          ? (isLastExercise ? "Finish Workout" : "Next Exercise")
-          : "Next Set";
+        nextSetBtn.textContent = isLastSet ? (isLastExercise ? "Finish Workout" : "Next Exercise") : "Next Set";
         startRestBtn.classList.add("hidden");
       } else {
         nextSetBtn.classList.add("hidden");
         startRestBtn.classList.remove("hidden");
       }
 
-      // When resting, hide start set / show stop rest conceptually via stop
       if (state.mode === "resting") {
         startSetBtn.disabled = true;
         stopSetBtn.disabled = false;
@@ -645,22 +609,17 @@
         stopSetBtn.textContent = "Stop Set";
       }
 
-      // Exercise list
       exerciseList.innerHTML = "";
       w.exercises.forEach((e, i) => {
         const div = document.createElement("div");
         div.className = "exercise-item";
         if (i < state.exerciseIndex) div.classList.add("done");
         if (i === state.exerciseIndex) div.classList.add("current");
-        div.innerHTML = `
-          <span>${e.name}</span>
-          <span class="sets">${e.sets} × ${e.reps}</span>
-        `;
+        div.innerHTML = "<span>" + e.name + "</span><span class=\"sets\">" + e.sets + " × " + e.reps + "</span>";
         exerciseList.appendChild(div);
       });
     }
 
-    // ========== TIMER LOGIC ==========
     function tick() {
       if (state.mode === "working") {
         state.seconds += 1;
@@ -671,7 +630,6 @@
         if (state.seconds <= 0) {
           stopTimer();
           restCompleteBeep();
-          // Auto advance to next set/exercise
           advanceAfterRest();
         } else if (state.seconds <= 3 && state.seconds > 0) {
           beep(700, 0.1);
@@ -691,7 +649,6 @@
     function stopWorking() {
       stopTimer();
       state.mode = "idle";
-      // Keep the recorded set time visible
       render();
     }
 
@@ -712,19 +669,16 @@
     function advanceAfterRest() {
       const ex = currentExercise();
       if (state.setIndex < ex.sets - 1) {
-        // Next set of same exercise
         state.setIndex += 1;
         state.mode = "idle";
         state.seconds = 0;
       } else {
-        // Move to next exercise
         if (state.exerciseIndex < totalExercises() - 1) {
           state.exerciseIndex += 1;
           state.setIndex = 0;
           state.mode = "idle";
           state.seconds = 0;
         } else {
-          // Workout finished
           finishWorkout();
           return;
         }
@@ -733,7 +687,6 @@
     }
 
     function nextManual() {
-      // User clicked "Next Set / Next Exercise / Finish"
       const ex = currentExercise();
       const isLastSet = state.setIndex >= ex.sets - 1;
       const isLastExercise = state.exerciseIndex >= totalExercises() - 1;
@@ -772,7 +725,7 @@
       stopTimer();
       activeScreen.classList.add("hidden");
       finishScreen.classList.remove("hidden");
-      finishMessage.textContent = `Great work finishing ${WORKOUTS[state.workoutKey].name}!`;
+      finishMessage.textContent = "Great work finishing " + WORKOUTS[state.workoutKey].name + "!";
       beep(660, 0.15);
       setTimeout(() => beep(880, 0.2), 180);
     }
@@ -796,7 +749,7 @@
 
     function startWorkout(key) {
       state.workoutKey = key;
-      state.exerciseIndex: 0,
+      state.exerciseIndex = 0;
       state.setIndex = 0;
       state.mode = "idle";
       state.seconds = 0;
@@ -806,7 +759,6 @@
       render();
     }
 
-    // ========== EVENTS ==========
     document.querySelectorAll(".workout-btn").forEach(btn => {
       btn.addEventListener("click", () => startWorkout(btn.dataset.workout));
     });
@@ -840,7 +792,6 @@
         chip.classList.add("active");
         state.restSeconds = parseInt(chip.dataset.rest, 10);
         if (state.mode === "resting") {
-          // Update live rest if already resting
           state.seconds = state.restSeconds;
           timerValue.textContent = formatTime(state.seconds);
         }
@@ -851,7 +802,6 @@
       state.soundOn = soundToggle.checked;
     });
 
-    // Prevent accidental navigation away while timer running
     window.addEventListener("beforeunload", (e) => {
       if (state.mode === "working" || state.mode === "resting") {
         e.preventDefault();
