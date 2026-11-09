@@ -77,9 +77,11 @@
     .finish-screen p { color: var(--muted); margin-bottom: 24px; }
     .sound-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); margin-top: 12px; justify-content: center; }
     .sound-toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+    #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
   </style>
 </head>
 <body>
+  <canvas id="confetti"></canvas>
   <h1>Kingkef's Full Body Workout</h1>
   <div id="select-screen">
     <div class="card" style="padding: 12px 14px;">
@@ -303,7 +305,13 @@
 
     function startWorking() { stopTimer(); state.mode = "working"; state.seconds = 0; state.timerId = setInterval(tick, 1000); beep(520, 0.1); render(); }
 
+    function isFinalSet() {
+      const ex = currentExercise();
+      return state.setIndex >= ex.sets - 1 && state.exerciseIndex >= totalExercises() - 1;
+    }
+
     function stopWorkingAndStartRest() {
+      if (isFinalSet()) { finishWorkout(); return; }
       stopTimer();
       state.mode = "resting";
       state.seconds = state.restSeconds;
@@ -337,16 +345,54 @@
       else finishWorkout();
     }
 
+    let confettiFrame = null;
+    function popConfetti() {
+      const canvas = document.getElementById("confetti");
+      const ctx = canvas.getContext("2d");
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth, h = window.innerHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const colors = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#e8eef7", "#60a5fa", "#f472b6"];
+      const pieces = Array.from({ length: 160 }, () => ({
+        x: Math.random() * w,
+        y: -24 - Math.random() * h * 0.55,
+        s: 6 + Math.random() * 7,
+        vy: 2.4 + Math.random() * 3.6,
+        vx: -2 + Math.random() * 4,
+        rot: Math.random() * Math.PI,
+        vr: -0.22 + Math.random() * 0.44,
+        color: colors[(Math.random() * colors.length) | 0]
+      }));
+      if (confettiFrame) cancelAnimationFrame(confettiFrame);
+      const start = performance.now();
+      function frame(now) {
+        ctx.clearRect(0, 0, w, h);
+        pieces.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.045; p.rot += p.vr;
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.62);
+          ctx.restore();
+        });
+        if (now - start < 3200) confettiFrame = requestAnimationFrame(frame);
+        else { ctx.clearRect(0, 0, w, h); confettiFrame = null; }
+      }
+      confettiFrame = requestAnimationFrame(frame);
+    }
+
     function finishWorkout() {
       stopTimer(); activeScreen.classList.add("hidden"); finishScreen.classList.remove("hidden");
       finishMessage.textContent = "Great work finishing " + WORKOUTS[state.workoutKey].name + "!";
       beep(660, 0.15); setTimeout(() => beep(880, 0.2), 180);
+      popConfetti();
     }
 
     function resetToSelect() {
       stopTimer();
       state = { workoutKey: null, exerciseIndex: 0, setIndex: 0, mode: "idle", seconds: 0, restSeconds: state.restSeconds, timerId: null, soundOn: state.soundOn };
       finishScreen.classList.add("hidden"); activeScreen.classList.add("hidden"); selectScreen.classList.remove("hidden");
+      if (confettiFrame) { cancelAnimationFrame(confettiFrame); confettiFrame = null; }
+      const c = document.getElementById("confetti"); if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height);
     }
 
     function startWorkout(key) {
